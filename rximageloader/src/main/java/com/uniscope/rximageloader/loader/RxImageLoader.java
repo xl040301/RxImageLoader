@@ -37,7 +37,7 @@ public class RxImageLoader {
          if (instance == null) {
              synchronized (RxImageLoader.class) {
                  if (instance == null) {
-                     instance = new Builder(context.getApplicationContext()).build();
+                     instance = new Builder(context).build();
                  }
              }
          }
@@ -108,6 +108,9 @@ public class RxImageLoader {
         }
         if (cd != null) {
             cd.dispose();
+        }
+        if (instance != null) {
+            instance = null;
         }
     }
 

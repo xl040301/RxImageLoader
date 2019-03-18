@@ -51,13 +51,16 @@ public class MemoryCacheUtils extends CacheObservable  {
      */
     @Override
     public void putDataToCache(ImageBean image) {
-        if (getDataFromCache(image.getUrl()) == null) {
+        if (image != null
+                && getDataFromCache(image.getUrl()) == null) {
             mMemoryCache.put(image.getUrl(),image.getBitmap());
         }
     }
 
     @Override
     public void close() {
-
+        if (mMemoryCache != null) {
+            mMemoryCache.evictAll();
+        }
     }
 }

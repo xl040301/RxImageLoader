@@ -51,6 +51,12 @@ public class RequestCreator {
                     public boolean test(ImageBean imageBean) throws Exception {
                         return imageBean.getBitmap() != null;
                     }
+                }).doOnNext(new Consumer<ImageBean>() {
+                    @Override
+                    public void accept(ImageBean imageBean) throws Exception {
+                        //缓存至内存
+                        memoryCacheUtils.putDataToCache(imageBean);
+                    }
                 });
     }
 
@@ -73,9 +79,9 @@ public class RequestCreator {
                 }).doOnNext(new Consumer<ImageBean>() {
                     @Override
                     public void accept(ImageBean imageBean) throws Exception {
-                        //缓存至磁盘和内存中
-                        diskCacheUtils.putDataToCache(imageBean);
+                        //缓存至内存和磁盘中
                         memoryCacheUtils.putDataToCache(imageBean);
+                        diskCacheUtils.putDataToCache(imageBean);
                     }
                 });
     }
