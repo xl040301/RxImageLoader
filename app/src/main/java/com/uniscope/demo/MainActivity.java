@@ -5,8 +5,11 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 
+import com.jakewharton.rxbinding2.view.RxView;
 import com.uniscope.demo.adapter.PhotosWallAdapter;
 import com.uniscope.demo.api.GetImageUrlApi;
 import com.uniscope.demo.utils.ImageSource;
@@ -20,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.OkHttpClient;
@@ -30,21 +34,24 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AbstractBaseActivity implements AbsListView.OnScrollListener {
 
-    private String[] mImageWords = { "J20", "天空之城", "千与千寻", "清新美女", "美女壁纸" };
-
     private List<String> mImageUrlList = new ArrayList<>();
     private ImageSource imageSource;
 
     private int mImageThumbSize;
     private int mImageThumbSpacing;
 
+    private Button btn_search;
+    private EditText et_search;
+    private String search_info = "";
 
 
-    /** GridView的适配器 */
+    /**
+     * GridView的适配器
+     */
     private PhotosWallAdapter mWallAdapter;
 
-   // @BindView(R.id.photo_wall)
-   private GridView mPhotoWallView;
+    // @BindView(R.id.photo_wall)
+    private GridView mPhotoWallView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,19 +59,43 @@ public class MainActivity extends AbstractBaseActivity implements AbsListView.On
         setContentView(R.layout.activity_main);
         mPhotoWallView = (GridView) findViewById(R.id.photo_wall);
         if (isPermissionGranted()) {
+            initViews();
             initEvent();
             initData();
         }
     }
+    private void initViews() {
+        Log.d("majun","initViews");
+        btn_search = (Button) findViewById(R.id.btn_search);
+        et_search = (EditText) findViewById(R.id.et_search);
+        RxView.clicks(btn_search)
+                .throttleFirst(3, TimeUnit.SECONDS)
+                .subscribe(new Consumer<Object>() {
+                    @Override
+                    public void accept(Object o) throws Exception {
+                        String info = et_search.getText().toString();
+                        if (TextUtils.isEmpty(info)) {
+                            et_search.requestFocus();
+                        } else {
+                            if (!info.equals(search_info)) {
+                                if (mImageUrlList != null) {
+                                    mImageUrlList.clear();
+                                }
+                                getImageListFromNet(info);
+                                search_info = info;
+                            }
+                        }
+                    }
+                });
+    }
 
     private void initData() {
         if (mWallAdapter == null) {
-            mWallAdapter = new PhotosWallAdapter(this,mImageUrlList);
+            mWallAdapter = new PhotosWallAdapter(this, mImageUrlList);
         }
         mPhotoWallView.setAdapter(mWallAdapter);
         imageSource = new ImageSource();
         imageSource.setDuRegex(true);
-        getImageListFromNet(4);
     }
 
     private void initEvent() {
@@ -88,14 +119,14 @@ public class MainActivity extends AbstractBaseActivity implements AbsListView.On
 
     /**
      * 从百度搜索页面提取具体图片URL地址
-     * @param index
+     *
+     * @param word
      */
-    private void getImageListFromNet(final int index) {
+    private void getImageListFromNet(String word) {
         final String regex = ImageSource.regex[2];
-        String word = mImageWords[index];
 
         OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(2*1000,TimeUnit.SECONDS)
+                .connectTimeout(2 * 1000, TimeUnit.SECONDS)
                 .build();
         new Retrofit.Builder()
                 .baseUrl(NetworkCacheUtils.BASE_URL)
@@ -152,10 +183,14 @@ public class MainActivity extends AbstractBaseActivity implements AbsListView.On
     protected void onDestroy() {
         super.onDestroy();
         RxImageLoader.getInstance(this).close();
+        if (mImageUrlList != null) {
+            mImageUrlList.clear();
+        }
     }
 
     @Override
     protected void onGetPermissionsSuccess() {
+        initViews();
         initEvent();
         initData();
     }

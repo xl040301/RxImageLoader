@@ -1,7 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/baidudown"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <EditText
+            android:id="@+id/et_search"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:textSize="18dp"
+            android:background="@drawable/bg_edittext"
+            android:textCursorDrawable="@drawable/text_cursor_default"
+            android:layout_weight="10.0"
+            android:layout_marginRight="10dp" />
+
+        <Button
+            android:id="@+id/btn_search"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/button_background_style"
+            android:textColor="@android:color/white"
+            android:textSize="15dp"
+            android:layout_weight="1.0"
+            android:text="@string/baidu_search"/>
+
+    </LinearLayout>
+
 
     <GridView
         android:id="@+id/photo_wall"
