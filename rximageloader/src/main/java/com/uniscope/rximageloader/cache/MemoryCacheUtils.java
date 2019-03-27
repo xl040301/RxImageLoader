@@ -6,6 +6,9 @@ import android.text.TextUtils;
 
 import com.uniscope.rximageloader.bean.ImageBean;
 
+import java.lang.ref.SoftReference;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * 作者：majun
  * 时间：2019/3/14 9:29
@@ -16,6 +19,11 @@ public class MemoryCacheUtils extends CacheObservable  {
 
     private LruCache<String,Bitmap> mMemoryCache;
 
+    //使用线程安全并发容器，用来存储LruCache执行完LRU策略后被移除的数据，
+    //由于SoftReference特性，在内存告急情况下，GC直接 clear SoftReference保存的数据，
+    //这样做以最大化保留数据存活时间。
+    private ConcurrentHashMap<String,SoftReference<Bitmap>> lruHashBitmap =
+            new ConcurrentHashMap<String,SoftReference<Bitmap>>();
 
     public MemoryCacheUtils() {
         //获取手机最大允许内存的1/8,超过指定内存,则开始回收
@@ -25,6 +33,13 @@ public class MemoryCacheUtils extends CacheObservable  {
             protected int sizeOf(String key, Bitmap value) {
                 //获取图片字节数
                 return value.getRowBytes() * value.getHeight();
+            }
+
+            @Override
+            protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
+                if (oldValue != null) {
+                    lruHashBitmap.put(key,new SoftReference<Bitmap>(oldValue));
+                }
             }
         };
     }
@@ -41,8 +56,15 @@ public class MemoryCacheUtils extends CacheObservable  {
         if (bitmap != null) {
             return new ImageBean(url,bitmap);
         } else {
-            return null;
+            SoftReference<Bitmap> bitmapSoftReference = lruHashBitmap.get(url);
+            if (bitmapSoftReference != null) {
+                bitmap = bitmapSoftReference.get();
+                if (bitmap != null) {
+                    return new ImageBean(url,bitmap);
+                }
+            }
         }
+        return null;
     }
 
     /**
