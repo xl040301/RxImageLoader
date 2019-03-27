@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MemoryCacheUtils extends CacheObservable  {
 
-
     private LruCache<String,Bitmap> mMemoryCache;
 
     //使用线程安全并发容器，用来存储LruCache执行完LRU策略后被移除的数据，
